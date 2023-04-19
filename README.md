@@ -1,2 +1,2 @@
 # MY-SQL-Portfolio
-See README for more information.
+Hello there! Thanks for stopping by and having a look at my SQL portfolio. I'm a teacher turned Data Analyst, powered by Artificial Intelligence and critical thinking. This portfolio will be show casing my querying, thoughts, & insights from the various projects I undertake. If you have any questions please feel free to contact me. Hallo! Danke, dass Sie vorbeischauen und einen Blick auf mein SQL-Portfolio werfen. Ich bin ein Lehrer, der zum Datenanalysten geworden ist, angetrieben von künstlicher Intelligenz und kritischem Denken. Dieses Portfolio wird meine Abfragen, Gedanken und Erkenntnisse aus den verschiedenen Projekten, die ich durchführe, zeigen. Wenn Sie Fragen haben, können Sie mich gerne kontaktieren. 
