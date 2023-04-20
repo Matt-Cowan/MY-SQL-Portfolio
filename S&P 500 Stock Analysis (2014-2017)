@@ -1,0 +1,90 @@
+This files contains queries/ answers for various questions regarding the Stock Prices of the S&P 500 over a three year period (2014-2017)
+
+I want to find out which date in the sample saw the largest overall trading volume & on that date, which two stocks were traded most? 
+
+Here's what I did:
+
+SELECT TOP 2 Date, Symbol, Volume
+FROM dbo.[S&P 500 Prices 2014-2017]
+WHERE Date IS NOT NULL AND Volume IS NOT NULL
+ORDER BY Volume DESC;
+
+This query returned the `Date`, `Symbol` and `Volume` of the highest trading volume in the table The `TOP 2` clause selects only the first two rows of the result set, which have the highest trading volume.
+
+Next I wanted to find out on which stock had the highest ROI (Return on Investment) during the sample period
+
+I queried the following:
+
+SELECT TOP 1 Symbol, CAST((MAX([Close]) - MIN([Close])) / MIN([Close]) AS DECIMAL(6,2)) AS ROI
+FROM dbo.[S&P 500 Prices 2014-2017]
+GROUP BY Symbol
+ORDER BY CAST((MAX([Close]) - MIN([Close])) / MIN([Close]) AS DECIMAL(6,2)) DESC
+
+This query calculates the ROI for each stock symbol in the table by finding the difference between the minimum and maximum closing prices and dividing it by the initial (minimum) price. The `CAST` function is used to format the ROI as a decimal with two decimal places. 
+
+I then wanted to find out the percentage change in price per stock per month, I used 'AAPL' as an example.
+
+I queried the following: 
+
+WITH Monthly AS (
+    SELECT Symbol, YEAR(Date) AS Year, MONTH(Date) AS Month, AVG([Close]) AS MonthlyAvgClose
+    FROM dbo.[S&P 500 Prices 2014-2017]
+    GROUP BY Symbol, YEAR(Date), MONTH(Date)
+), MonthlyPercentageChange AS (
+    SELECT Symbol, Year, Month, 
+        CAST(
+            (
+                MonthlyAvgClose - 
+                COALESCE(
+                    LAG(MonthlyAvgClose) OVER(PARTITION BY Symbol ORDER BY Year, Month), 
+                    MonthlyAvgClose
+                )
+            ) 
+            / 
+            COALESCE(
+                LAG(MonthlyAvgClose) OVER(PARTITION BY Symbol ORDER BY Year, Month), 
+                MonthlyAvgClose
+            ) 
+          AS DECIMAL(6,2)) AS PercentageChange
+    FROM Monthly
+)
+SELECT Symbol, Year, Month, PercentageChange
+FROM MonthlyPercentageChange
+WHERE Symbol = 'AAPL'
+ORDER BY Year, Month ASC;
+
+To my surprise, this query worked. (This was tricky to work out and took a lot of trial and error)
+
+I wanted to work out the monthly average closing price for a particular stock so for the example below I used 'AAPL'
+
+I queried the following:
+
+SELECT YEAR(Date) AS Year, MONTH(Date) AS Month, AVG([Close]) AS MonthlyAvgClose
+FROM dbo.[S&P 500 Prices 2014-2017]
+WHERE Symbol = 'AAPL'
+GROUP BY YEAR(Date), MONTH(Date)
+ORDER BY Year, Month ASC;
+
+I included the ORDER BY clause above to ensure that the results returned were in chronological order.
+
+I wanted to work out which stock had the largest ROI in the year 2017.
+
+I queried the following:
+
+SELECT Symbol, ((MAX([Close]) - MIN([Close])) / MIN([Close])) * 100 AS ROI
+FROM dbo.[S&P 500 Prices 2014-2017]
+WHERE YEAR(Date) = 2017
+GROUP BY Symbol
+ORDER BY ROI DESC
+OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY;
+
+Finally, similar to the question above, I wanted to find the stock which had the smallest ROI in the year of 2017
+
+
+SELECT Symbol, ((MAX([Close]) - MIN([Close])) / MIN([Close])) * 100 AS ROI
+FROM dbo.[S&P 500 Prices 2014-2017]
+WHERE YEAR(Date) = 2017
+GROUP BY Symbol
+ORDER BY ROI ASC
+OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY;
+
