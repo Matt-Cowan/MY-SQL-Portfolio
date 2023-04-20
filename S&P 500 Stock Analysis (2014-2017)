@@ -22,7 +22,7 @@ ORDER BY CAST((MAX([Close]) - MIN([Close])) / MIN([Close]) AS DECIMAL(6,2)) DESC
 
 This query calculates the ROI for each stock symbol in the table by finding the difference between the minimum and maximum closing prices and dividing it by the initial (minimum) price. The `CAST` function is used to format the ROI as a decimal with two decimal places. 
 
-I then wanted to find out the percentage change in price per stock per month, I used 'AAPL' as an example.
+I then wanted to find out the percentage change in price per stock per month, and create a temp table I used 'AAPL' as an example.
 
 I queried the following: 
 
