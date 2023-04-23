@@ -1,0 +1,68 @@
+This files contains various queries about a dataset containing NYE resolutions, containing the topic, the state from which it was tweeted, the user gender, and the category.
+
+From this dataset I wanted to find out which gender tweeted the most on NYE 2015:
+
+SELECT user_gender, COUNT(*) AS NumOfTweets
+FROM dbo.[New Years Tweets]
+GROUP BY user_gender
+ORDER BY NumOfTweets DESC;
+
+I wanted to find out which state tweeted the most by querying the following:
+
+SELECT tweet_state, COUNT(*) AS NumOfTweets
+FROM dbo.[New Years Tweets]
+GROUP BY tweet_state
+ORDER BY NumOfTweets DESC;
+
+Note: I could have added TOP to see the top 5, 10, or 15 states instead of all of them.
+
+I wanted to find out which hashtags(#) were most popular:
+
+
+SELECT TOP 3 SUBSTRING(tweet_text, CHARINDEX('#', tweet_text), CHARINDEX(' ', tweet_text + ' ', CHARINDEX('#', tweet_text)) - CHARINDEX('#', tweet_text)) AS Hashtag, COUNT(*) AS NumOfTweets
+FROM dbo.[New Years Tweets]
+GROUP BY SUBSTRING(tweet_text, CHARINDEX('#', tweet_text), CHARINDEX(' ', tweet_text + ' ', CHARINDEX('#', tweet_text)) - CHARINDEX('#', tweet_text))
+ORDER BY NumOfTweets DESC;
+
+I wanted to find out which category was tweeted most/ least often:
+
+SELECT TOP 1 tweet_category AS MostTweetedCategory, COUNT(*) AS NumTweets
+FROM dbo.[New Years Tweets]
+WHERE tweet_category IS NOT NULL
+GROUP BY tweet_category
+ORDER BY NumTweets DESC
+
+& for the least tweeted category:
+
+SELECT TOP 1 tweet_category AS LeastTweetedCategory, COUNT(*) AS NumTweets
+FROM dbo.[New Years Tweets]
+WHERE tweet_category IS NOT NULL
+GROUP BY tweet_category
+ORDER BY NumTweets ASC;
+
+What was the most popular hour of the day to tweet ? 
+
+SELECT 
+  DATEFROMPARTS(YEAR(tweet_created), MONTH(tweet_created), DAY(tweet_created)) AS Date, 
+  DATEPART(hour, tweet_created) AS Hour, 
+  COUNT(DISTINCT tweet_text) AS NumResolutions
+FROM dbo.[New Years Tweets]
+GROUP BY DATEFROMPARTS(YEAR(tweet_created), MONTH(tweet_created), DAY(tweet_created)), DATEPART(hour, tweet_created)
+ORDER BY NumResolutions DESC
+
+
+How can we find out the average amount of tweets per state ?
+
+
+SELECT tweet_state, COUNT(*) AS NumTweets, AVG(COUNT(*)) OVER () AS AvgTweetsPerState
+FROM dbo.[New Years Tweets]
+WHERE tweet_state IS NOT NULL
+GROUP BY tweet_state
+ORDER BY AvgTweetsPerState DESC
+
+
+
+Finally, how many tweets are in this dataset total ?
+
+SELECT COUNT(*) AS TotalTweets
+FROM dbo.[New Years Tweets]
