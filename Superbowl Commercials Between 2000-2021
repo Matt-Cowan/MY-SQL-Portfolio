@@ -1,0 +1,59 @@
+This files contains queries/ answers for various questions regarding Superbowl Commercials for 10 popular brands between 2000-2021.
+
+The first question I wanted to answer was which brand had the most commercials during this sample data. In order to work it out, I quiered the following & it returned 'Bud light'.
+
+SELECT TOP 1 Brand, COUNT(*) AS NumCommercials
+FROM dbo.[SuperBowl Commercials Master File]
+GROUP BY Brand
+ORDER BY NumCommercials DESC;
+
+I wanted to find out which commercial whas the least popular during this time. So I quiered:
+
+SELECT TOP 1 Brand, 
+             Year,
+             Youtube_Views,
+             Youtube_Likes
+FROM dbo.[SuperBowl Commercials Master File]
+ORDER BY Youtube_Views ASC, Youtube_Likes ASC;
+
+How to find out the average length per commercial per year ?
+
+SELECT AVG(Length) AS AvgLength
+FROM dbo.[SuperBowl Commercials Master File]
+WHERE Year = 2006; -- Insert different year here.
+
+Next, which brand(s) have had the highest success using commercials (youtube hits etc)
+
+SELECT Brand, SUM(Youtube_Views) AS TotalViews
+FROM dbo.[SuperBowl Commercials Master File]
+GROUP BY Brand
+ORDER BY TotalViews DESC;
+
+This brought back 'Doritos' from 2012 being the brand with the highest hits.
+
+Which commercial cost the most to produce ?
+
+
+SELECT TOP 1 Brand, 
+             Year, 
+             Estimated_Cost
+FROM dbo.[SuperBowl Commercials Master File]
+ORDER BY Estimated_Cost DESC;
+
+
+Now I wanted to see what was the cheapest commercial to produce but it produced the most hits. 
+
+SELECT TOP 1 Brand, 
+             Year, 
+             Estimated_Cost, 
+             Youtube_Views
+FROM dbo.[SuperBowl Commercials Master File]
+ORDER BY (Youtube_Views/Estimated_Cost) DESC;
+
+Finally, I wanted to work out what the average cost was per commercial between 2000-2021:
+
+SELECT AVG(Estimated_Cost) AS AverageCost
+FROM dbo.[SuperBowl Commercials Master File]
+WHERE Year BETWEEN 2000 AND 2021;
+
+I hope you enjoyed.
