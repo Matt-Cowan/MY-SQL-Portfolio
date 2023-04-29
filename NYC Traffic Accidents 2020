@@ -1,0 +1,117 @@
+This file showcases queries regarding a dataset containing NYC traffic accidents in 2020 (Jan-Aug)
+
+I wanted to first break down accident frequency by day of week and hour of day. Here's how I found out:
+
+SELECT 
+  DATEPART(weekday, CRASH_DATE) AS DayOfWeek,
+  DATEPART(hour, CRASH_TIME) AS HourOfDay,
+  COUNT(*) AS AccidentFrequency
+FROM dbo.[NYC Accidents 2020]
+GROUP BY DATEPART(weekday, CRASH_DATE), DATEPART(hour, CRASH_TIME)
+ORDER BY AccidentFrequency DESC
+
+Are there specific locations with higher accident rates?
+
+SELECT 
+  BOROUGH,
+  COUNT(*) AS AccidentCount
+FROM dbo.[NYC Accidents 2020]
+WHERE BOROUGH IS NOT NULL
+GROUP BY BOROUGH
+ORDER BY AccidentCount DESC
+
+Which days of the week have the highest number of accidents?
+
+SELECT 
+  DATEPART(weekday, CRASH_DATE) AS DayOfWeek,
+  COUNT(*) AS AccidentCount
+FROM dbo.[NYC Accidents 2020]
+GROUP BY DATEPART(weekday, CRASH_DATE)
+ORDER BY AccidentCount DESC
+
+Are there trends in the number of accidents over the months?
+
+SELECT 
+  DATEPART(year, CRASH_DATE) AS Year,
+  DATEPART(month, CRASH_DATE) AS Month, 
+  COUNT(*) AS AccidentCount
+FROM dbo.[NYC Accidents 2020]
+GROUP BY DATEPART(year, CRASH_DATE), DATEPART(month, CRASH_DATE)
+ORDER BY Year, Month
+
+This returned that January had the most accidents; this could be down to the snow / bad weather as a factor.
+
+On which particular street were the most accidents reported? What does that represent as a % of all reported accidents?
+
+
+WITH TotalAccidents AS (
+  SELECT COUNT(*) AS TotalCount
+  FROM dbo.[NYC Accidents 2020]
+  WHERE ON_STREET_NAME IS NOT NULL
+),
+StreetAccidents AS (
+  SELECT 
+    ON_STREET_NAME,
+    COUNT(*) AS AccidentCount
+  FROM dbo.[NYC Accidents 2020]
+  WHERE ON_STREET_NAME IS NOT NULL
+  GROUP BY ON_STREET_NAME
+)
+SELECT TOP 1
+  ON_STREET_NAME,
+  AccidentCount,
+  CAST(AccidentCount AS float) / TotalCount * 100 AS AccidentPercentage
+FROM StreetAccidents,
+     TotalAccidents
+ORDER BY AccidentCount DESC
+
+Comparing the % of total accidents by month. Can we work out or notice any seasonal patterns ?
+
+WITH TotalAccidents AS (
+  SELECT COUNT(*) AS TotalCount
+  FROM dbo.[NYC Accidents 2020]
+),
+MonthlyAccidents AS (
+  SELECT 
+    DATEPART(month, CRASH_DATE) AS Month,
+    COUNT(*) AS AccidentCount
+  FROM dbo.[NYC Accidents 2020]
+  GROUP BY DATEPART(month, CRASH_DATE)
+)
+SELECT 
+  Month,
+  AccidentCount,
+  CAST(AccidentCount AS float) / TotalCount * 100 AS AccidentPercentage
+FROM MonthlyAccidents, TotalAccidents
+ORDER BY Month
+
+How do accident rates vary by time of day or day of the week? This query uses two common table expressions (CTEs): `TimeOfDayAccidents` and `DayOfWeekAccidents`.
+
+WITH TimeOfDayAccidents AS (
+  SELECT 
+    DATEPART(hour, CRASH_TIME) AS HourOfDay,
+    COUNT(*) AS AccidentCount
+  FROM dbo.[NYC Accidents 2020]
+  GROUP BY DATEPART(hour, CRASH_TIME)
+),
+DayOfWeekAccidents AS (
+  SELECT 
+    DATEPART(weekday, CRASH_DATE) AS DayOfWeek,
+    COUNT(*) AS AccidentCount
+  FROM dbo.[NYC Accidents 2020]
+  GROUP BY DATEPART(weekday, CRASH_DATE)
+)
+SELECT 
+  'HourOfDay' AS GroupingType,
+  HourOfDay AS GroupValue,
+  AccidentCount
+FROM TimeOfDayAccidents
+UNION ALL
+SELECT 
+  'DayOfWeek' AS GroupingType,
+  DayOfWeek AS GroupValue,
+  AccidentCount
+FROM DayOfWeekAccidents
+ORDER BY GroupingType, GroupValue
+
+
