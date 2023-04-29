@@ -1,0 +1,172 @@
+This file contains queries for ratings and reviews for 15,000+ movies reviewed by Rotten Tomatoes. Each record includes film details (title, description, rating, genre, directors, cast, release date, studio, runtime, etc.), as well as featured reviews, "Tomatometer" status, and audience ratings.
+
+What does the distribution of films look like by rating? By primary genre? 
+
+
+WITH RatingDistribution AS (
+  SELECT 
+    rating,
+    COUNT(*) AS FilmCount
+  FROM dbo.[Rotten Tomatoes Movies]
+  GROUP BY rating
+),
+PrimaryGenreDistribution AS (
+  SELECT 
+    LEFT(genre, CHARINDEX(',', genre + ',') - 1) AS PrimaryGenre,
+    COUNT(*) AS FilmCount
+  FROM dbo.[Rotten Tomatoes Movies]
+  GROUP BY LEFT(genre, CHARINDEX(',', genre + ',') - 1)
+)
+SELECT 
+  'Rating' AS GroupingType,
+  rating AS GroupValue,
+  FilmCount
+FROM RatingDistribution
+UNION ALL
+SELECT 
+  'PrimaryGenre' AS GroupingType,
+  PrimaryGenre AS GroupValue,
+  FilmCount
+FROM PrimaryGenreDistribution
+ORDER BY GroupingType, GroupValue
+
+What % of films received a Certified Fresh Tomatometer rating?
+
+WITH TotalFilms AS (
+  SELECT COUNT(*) AS FilmCount
+  FROM dbo.[Rotten Tomatoes Movies]
+),
+CertifiedFreshFilms AS (
+  SELECT COUNT(*) AS FreshCount
+  FROM dbo.[Rotten Tomatoes Movies]
+  WHERE tomatometer_status = 'Certified Fresh'
+)
+SELECT 
+  CAST(FreshCount AS float) / FilmCount * 100 AS CertifiedFreshPercentage
+FROM TotalFilms, CertifiedFreshFilms
+
+`TotalFilms` calculates the total number of film records in the table.
+
+`CertifiedFreshFilms` calculates the number of films with a Certified Fresh Tomatometer rating by filtering the records with a `tomatometer_status` of 'Certified Fresh'.
+
+What % of films received a Certified Rotten?
+
+WITH TotalFilms AS (
+  SELECT COUNT(*) AS FilmCount
+  FROM dbo.[Rotten Tomatoes Movies]
+),
+CertifiedRottenFilms AS (
+  SELECT COUNT(*) AS RottenCount
+  FROM dbo.[Rotten Tomatoes Movies]
+  WHERE tomatometer_status = 'Rotten'
+)
+SELECT 
+  CAST(RottenCount AS float) / FilmCount * 100 AS CertifiedRottenPercentage
+FROM TotalFilms, CertifiedRottenFilms
+
+Comparing the average Tomatometer ratings by Studio. Which studios produce the highest rated films, on average?
+
+SELECT TOP 3
+  studio_name,
+  AVG(tomatometer_rating) AS AverageTomatometerRating
+FROM dbo.[Rotten Tomatoes Movies]
+GROUP BY studio_name
+ORDER BY AverageTomatometerRating DESC
+
+
+Comparing the average Tomatometer ratings by Studio. Which studios produce thelowest rated films, on average?
+
+SELECT TOP 3
+  studio_name,
+  AVG(tomatometer_rating) AS AverageTomatometerRating
+FROM dbo.[Rotten Tomatoes Movies]
+GROUP BY studio_name
+ORDER BY AverageTomatometerRating ASC
+
+I only wanted to return the top 3 results on the above queries, so I used SELECT TOP 3.
+
+What year were the most new films released?
+
+
+WITH ReleasesPerMonth AS (
+    SELECT
+        YEAR(in_theaters_date) AS ReleaseYear,
+        MONTH(in_theaters_date) AS ReleaseMonth,
+        COUNT(*) AS ReleaseCount
+    FROM dbo.[Rotten Tomatoes Movies]
+    WHERE in_theaters_date IS NOT NULL
+    GROUP BY YEAR(in_theaters_date), MONTH(in_theaters_date)
+)
+SELECT TOP 1
+    ReleaseYear,
+    ReleaseMonth,
+    ReleaseCount
+FROM ReleasesPerMonth
+ORDER BY ReleaseCount DESC;
+
+Which films showed the largest discrepancies between audiences and critics?
+
+SELECT TOP 3
+    movie_title,
+    tomatometer_rating AS CriticsRating,
+    audience_rating AS AudienceRating,
+    ABS(CAST(tomatometer_rating AS int) - CAST(audience_rating AS int)) AS Discrepancy
+FROM dbo.[Rotten Tomatoes Movies]
+WHERE tomatometer_rating IS NOT NULL AND audience_rating IS NOT NULL
+ORDER BY Discrepancy DESC;
+
+What are the top 3 movies rated by critics in the dataset ?
+
+SELECT TOP 3
+    movie_title,
+    tomatometer_rating AS CriticsRating
+FROM dbo.[Rotten Tomatoes Movies]
+WHERE tomatometer_rating IS NOT NULL
+ORDER BY CriticsRating DESC;
+
+What are the top 3 movies rated by the audience in the dataset ?
+
+SELECT TOP 3
+    movie_title,
+    audience_rating AS AudienceRating
+FROM dbo.[Rotten Tomatoes Movies]
+WHERE audience_rating IS NOT NULL
+ORDER BY AudienceRating DESC;
+
+What are the top 3 most popular genres in the dataset ?
+
+SELECT TOP 3
+    genre,
+    COUNT(*) AS NumberOfMovies
+FROM dbo.[Rotten Tomatoes Movies]
+WHERE genre IS NOT NULL
+GROUP BY genre
+ORDER BY NumberOfMovies DESC;
+
+What are the top 3 directors with the most movies ?
+
+SELECT TOP 3
+    directors,
+    COUNT(*) AS NumberOfMovies
+FROM dbo.[Rotten Tomatoes Movies]
+WHERE directors IS NOT NULL
+GROUP BY directors
+ORDER BY NumberOfMovies DESC;
+
+Finally how can I find a movie with a specific tomato rating ?
+
+sql
+SELECT
+    movie_title,
+    tomatometer_status
+FROM dbo.[Rotten Tomatoes Movies]
+WHERE tomatometer_status = 'Certified Fresh'
+ORDER BY movie_title;
+
+
+I hope you enjoyed!
+
+
+
+
+
